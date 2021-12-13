@@ -7,6 +7,7 @@
 # @LastEditBy :
 
 import io
+import os
 import PIL
 from PIL import Image
 import requests
@@ -41,6 +42,7 @@ class ClipCapHelper(BasicHelper):
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
                       "Chrome/96.0.4664.45 Safari/537.36",
     }
+
     def __init__(
             self,
             nn_models_map: ClipCapHelperNNModelsMap,
@@ -60,19 +62,28 @@ class ClipCapHelper(BasicHelper):
             use_beam_search = bool(kwargs["use_beam_search"])
 
         image_url = task_message.input_message.image_url
+        # TODO: 更严苛的路径检验（如判断是否是图片路径等）以防止攻击
         # download image
-        try:
-            response = requests.get(image_url, stream=True, headers=self.HEADERS, verify=False)
-        except:
-            raise
-        if response.status_code == 200:
-            response.raw.decode_content = True
-
-            image = response.content
+        if os.path.exists(image_url) and os.path.isfile(image_url) and any(
+                [
+                    image_url.lower().endswith(postfix) for postfix
+                    in ["jpg", "jpeg", "png", "bmp", "webp", "tif", "tiff"]
+                ]
+        ):
+            with open(image_url, "rb") as f:
+                image = f.read()
         else:
-            image = b""
-        if not image:
-            return
+            try:
+                response = requests.get(image_url, stream=True, headers=self.HEADERS, verify=False)
+            except:
+                raise
+            if response.status_code == 200:
+                response.raw.decode_content = True
+                image = response.content
+            else:
+                image = b""
+            if not image:
+                return
 
         caption_result = self.clip_cap_predictor.predict(
             Image.open(io.BytesIO(image)),
