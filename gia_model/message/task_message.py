@@ -14,7 +14,7 @@ from ..basic import BasicMessage
 
 class TaskInputMessage(BasicMessage):
     task_id: str = Field(default=..., description="id of each task")
-    image: bytes = Field(default=..., description="image bytes")
+    image_url: str = Field(default=..., description="image download path")
 
 
 class TaskOutputMessage(BasicMessage):

@@ -9,6 +9,7 @@
 import io
 import PIL
 from PIL import Image
+import requests
 from typing import *
 
 from .utils import ClipCapPredictor
@@ -31,6 +32,15 @@ class ClipCapHelperResourcesMap(BasicHelperResourcesMap):
 
 
 class ClipCapHelper(BasicHelper):
+    HEADERS = {
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,"
+                  "application/signed-exchange;v=b3;q=0.9",
+        "accept-encoding": "gzip, deflate, br",
+        "accept-language": "zh-CN,zh;q=0.9",
+        "cache-control": "max-age=0",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+                      "Chrome/96.0.4664.45 Safari/537.36",
+    }
     def __init__(
             self,
             nn_models_map: ClipCapHelperNNModelsMap,
@@ -49,7 +59,21 @@ class ClipCapHelper(BasicHelper):
         if "use_beam_search" in kwargs:
             use_beam_search = bool(kwargs["use_beam_search"])
 
-        image = task_message.input_message.image
+        image_url = task_message.input_message.image_url
+        # download image
+        try:
+            response = requests.get(image_url, stream=True, headers=self.HEADERS, verify=False)
+        except:
+            raise
+        if response.status_code == 200:
+            response.raw.decode_content = True
+
+            image = response.content
+        else:
+            image = b""
+        if not image:
+            return
+
         caption_result = self.clip_cap_predictor.predict(
             Image.open(io.BytesIO(image)),
             use_beam_search=use_beam_search
