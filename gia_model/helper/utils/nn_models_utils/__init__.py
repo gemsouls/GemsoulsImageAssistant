@@ -7,4 +7,4 @@
 # @LastEditBy :
 
 
-from clip_cap_inference import Predictor as ClipCapPredictor
+from .clip_cap_inference import Predictor as ClipCapPredictor
