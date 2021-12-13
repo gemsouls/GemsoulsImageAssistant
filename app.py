@@ -103,3 +103,8 @@ async def image2text(input_message: TaskInputMessage):
     end = time.time()
     print(f"[{datetime.now()}]->[image2text]->task-{task_id} process finished, using {end-start:.4f}s")
     return task_message.output_message
+
+
+@app.post("/hello")
+async def hello():
+    return {"result": "hello world!"}
