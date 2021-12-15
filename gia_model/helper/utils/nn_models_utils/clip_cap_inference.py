@@ -150,10 +150,10 @@ class ClipCaptionPrefix(ClipCaptionModel):
 def generate_beam(
     model,
     tokenizer,
-    beam_size: int = 5,
+    beam_size: int = 3,
     prompt=None,
     embed=None,
-    entry_length=67,
+    entry_length=32,
     temperature=1.0,
     stop_token: str = ".",
 ):
