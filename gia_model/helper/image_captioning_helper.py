@@ -89,7 +89,8 @@ class ClipCapHelper(BasicHelper):
             Image.open(io.BytesIO(image)),
             use_beam_search=use_beam_search
         )
-        task_message.output_message.caption_result = caption_result
+        # TODO: 添加适当的截断策略以保留完整的句子
+        task_message.output_message.caption_result = caption_result.strip()
 
     def __call__(self, task_message: TaskMessage, *args, **kwargs):
         if self.turn_on:
