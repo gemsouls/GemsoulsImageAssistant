@@ -122,6 +122,6 @@ async def image2text(input_message: TaskInputMessage):
     return task_message.output_message
 
 
-@app.post("/hello")
+@app.get("/hello")
 async def hello():
     return {"result": "hello world!"}
