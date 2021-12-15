@@ -1,5 +1,5 @@
 aiohttp==3.8.1
-clip==1.0
+git+https://github.com/openai/CLIP.git
 fastapi==0.70.1
 numpy==1.21.2
 Pillow==8.4.0
