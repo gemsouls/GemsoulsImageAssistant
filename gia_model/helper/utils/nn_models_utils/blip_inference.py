@@ -22,7 +22,7 @@ class Predictor:
 
         self.device = device
         self.model = blip_decoder(pretrained=pretrained_path, image_size=384, vit='base')
-        self.model.to(self.device)
+        self.model.to(self.device).eval()
 
     def predict(self, image: Union[str, Any], use_beam_search: bool = True):
 
