@@ -16,7 +16,7 @@ from typing import *
 
 from fastapi import FastAPI
 
-from gia_model.pipeline import ExecutionPipeline, NAME_EXECUTION_PIPELINE_NN_MODELS_INITIALIZER
+from gia_model.pipeline import ExecutionPipeline
 from gia_model.process import ExecutionProcessHandler, ExecutionProcess
 from gia_model.message import TaskMessage, TaskInputMessage, TaskOutputMessage
 from gia_config import ServiceConfig
