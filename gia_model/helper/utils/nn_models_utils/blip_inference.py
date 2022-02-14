@@ -18,15 +18,16 @@ from gia_model.exception.image_exception import GiaImageTransformError
 
 
 class Predictor:
-    def __init__(self, pretrained_path: str):
+    def __init__(self, pretrained_path: str, device: str = "cpu"):
 
+        self.device = device
         self.model = blip_decoder(pretrained=pretrained_path, image_size=384, vit='base')
-        self.model.cpu().eval()
+        self.model.to(self.device)
 
     def predict(self, image: Union[str, Any], use_beam_search: bool = True):
 
         try:
-            im = load_image(image, image_size=384, device=self.model.device)
+            im = load_image(image, image_size=384, device=self.device)
         except:
             raise GiaImageTransformError(
                 origin_err_msg=traceback.format_exc(),
