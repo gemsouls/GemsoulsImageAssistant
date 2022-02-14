@@ -6,9 +6,13 @@
 # @Description:
 # @LastEditBy :
 
-from .nn_models_config import build_nn_models_config
+from .nn_models_config import NNModelsConfig, ImageCaptionModelType
 
 
 class ServiceConfig:
-    def __init__(self):
-        self.models_config = build_nn_models_config()
+    def __init__(
+        self,
+        image_caption_model_type: ImageCaptionModelType
+    ):
+        self.models_config = NNModelsConfig()
+        self.image_caption_model_type = image_caption_model_type

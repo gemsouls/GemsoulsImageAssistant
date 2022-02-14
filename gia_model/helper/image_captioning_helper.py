@@ -11,28 +11,20 @@ import os
 import PIL
 from PIL import Image
 import requests
+import traceback
 from typing import *
 
-from .utils import ClipCapPredictor
+import torch
+
+from .utils import ClipCapPredictor, BlipPredictor
 from ..basic import BasicHelper, BasicHelperResourcesMap, BasicHelperNNModelsMap
 from ..message import TaskMessage
+from ..exception.image_exception import *
+from gia_config import ServiceConfig
+from gia_config.nn_models_config import ImageCaptionModelType
 
 
-class ClipCapHelperNNModelsMap(BasicHelperNNModelsMap):
-    def __init__(self, pretrained_clip_cap_model_weights: Any):
-        super(ClipCapHelperNNModelsMap, self).__init__()
-        self.pretrained_clip_cap_model_weights = pretrained_clip_cap_model_weights
-
-    def update(self, *args, **kwargs):
-        return
-
-
-class ClipCapHelperResourcesMap(BasicHelperResourcesMap):
-    def update(self, *args, **kwargs):
-        return
-
-
-class ClipCapHelper(BasicHelper):
+class ImageCaptionHelper(BasicHelper):
     HEADERS = {
         "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,"
                   "application/signed-exchange;v=b3;q=0.9",
@@ -44,15 +36,20 @@ class ClipCapHelper(BasicHelper):
     }
 
     def __init__(
-            self,
-            nn_models_map: ClipCapHelperNNModelsMap,
-            resources_map: ClipCapHelperResourcesMap,
-            turn_on: bool = True,
-            **additional_config
+        self,
+        config: ServiceConfig,
+        turn_on: bool = True,
+        **additional_config
     ):
-        super(ClipCapHelper, self).__init__(nn_models_map, resources_map, turn_on, **additional_config)
+        super(ImageCaptionHelper, self).__init__(None, None, turn_on, **additional_config)
 
-        self.clip_cap_predictor = ClipCapPredictor(nn_models_map.pretrained_clip_cap_model_weights)
+        if config.image_caption_model_type == ImageCaptionModelType.Blip:
+            self.predictor = BlipPredictor(config.models_config.image_caption.blip.caption_base)
+        else:
+            weights = torch.load(
+                config.models_config.image_caption.clip_cap.coco, map_location="cpu"
+            )
+            self.predictor = ClipCapPredictor(weights)
 
     def _help(self, task_message: TaskMessage, *args, **kwargs):
         use_beam_search = False
@@ -65,32 +62,51 @@ class ClipCapHelper(BasicHelper):
         # TODO: 更严苛的路径检验（如判断是否是图片路径等）以防止攻击
         # download image
         if os.path.exists(image_url) and os.path.isfile(image_url) and any(
-                [
-                    image_url.lower().endswith(postfix) for postfix
-                    in ["jpg", "jpeg", "png", "bmp", "webp", "tif", "tiff"]
-                ]
+            [
+                image_url.lower().endswith(postfix) for postfix
+                in ["jpg", "jpeg", "png", "bmp", "webp", "tif", "tiff"]
+            ]
         ):
-            with open(image_url, "rb") as f:
-                image = f.read()
+            try:
+                with open(image_url, "rb") as f:
+                    image = f.read()
+            except:
+                raise GiaImageReadError(
+                    origin_err_msg=traceback.format_exc(),
+                    additional_err_msg=f"read local image [{image_url}] failed.",
+                    image_url=image_url
+                )
+
         else:
             try:
                 response = requests.get(image_url, stream=True, headers=self.HEADERS, verify=False)
             except:
-                raise
+                raise GiaImageDownLoadError(
+                    origin_err_msg=traceback.format_exc(),
+                    additional_err_msg=f"download remote image [{image_url}] failed.",
+                    image_url=image_url
+                )
             if response.status_code == 200:
                 response.raw.decode_content = True
                 image = response.content
             else:
-                image = b""
-            if not image:
-                return
+                raise GiaImageDownLoadError(
+                    origin_err_msg="",
+                    additional_err_msg=f"download remote image [{image_url}] failed, "
+                                       f"status code is {response.status_code}",
+                    image_url=image_url
+                )
 
-        caption_result = self.clip_cap_predictor.predict(
-            Image.open(io.BytesIO(image)),
-            use_beam_search=use_beam_search
-        )
-        # TODO: 添加适当的截断策略以保留完整的句子
-        task_message.output_message.caption_result = caption_result.strip()
+        try:
+            caption_result = self.predictor.predict(
+                Image.open(io.BytesIO(image)),
+                use_beam_search=use_beam_search
+            )
+        except:
+            raise
+        else:
+            # TODO: 添加适当的截断策略以保留完整的句子
+            task_message.output_message.caption_result = caption_result.strip()
 
     def __call__(self, task_message: TaskMessage, *args, **kwargs):
         if self.turn_on:

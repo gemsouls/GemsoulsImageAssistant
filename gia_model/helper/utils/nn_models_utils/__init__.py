@@ -8,3 +8,4 @@
 
 
 from .clip_cap_inference import Predictor as ClipCapPredictor
+from .blip_inference import Predictor as BlipPredictor

@@ -20,6 +20,7 @@ from gia_model.pipeline import ExecutionPipeline, NAME_EXECUTION_PIPELINE_NN_MOD
 from gia_model.process import ExecutionProcessHandler, ExecutionProcess
 from gia_model.message import TaskMessage, TaskInputMessage, TaskOutputMessage
 from gia_config import ServiceConfig
+from gia_config.nn_models_config import ImageCaptionModelType
 
 
 class Queues:
@@ -42,7 +43,7 @@ class AppManager:
             process=ExecutionProcess,
             pipeline=ExecutionPipeline,
             pipeline_init_kwargs={
-                "config_models": self.service_config.models_config[NAME_EXECUTION_PIPELINE_NN_MODELS_INITIALIZER]
+                "config": self.service_config
             },
             input_queue=self.queues.execution_input_queue,
             output_queues=[self.queues.system_output_queue],
@@ -95,7 +96,9 @@ app_manager: AppManager = None
 @app.on_event("startup")
 async def startup_event():
     global app_manager
-    service_config = ServiceConfig()
+    service_config = ServiceConfig(
+        image_caption_model_type=ImageCaptionModelType.Blip
+    )
     app_manager = AppManager(service_config)
     app_manager.start()
 

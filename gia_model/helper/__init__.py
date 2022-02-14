@@ -7,7 +7,7 @@
 # @LastEditBy :
 
 from .image_captioning_helper import (
-    ClipCapHelperNNModelsMap,
-    ClipCapHelperResourcesMap,
-    ClipCapHelper
+    ImageCaptionHelperNNModelsMap,
+    ImageCaptionHelperResourcesMap,
+    ImageCaptionHelper
 )

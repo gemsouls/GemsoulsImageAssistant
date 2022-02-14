@@ -13,21 +13,11 @@ import torch
 
 from ..basic import BasicPipeline, BasicPipelineNNModelsInitializer, BasicPipelineResourcesInitializer
 from ..helper import (
-    ClipCapHelperResourcesMap,
-    ClipCapHelperNNModelsMap,
-    ClipCapHelper
+    ImageCaptionHelper
 )
 from ..message import TaskMessage
-
-
-class ExecutionPipelineNNModelsInitializer(BasicPipelineNNModelsInitializer):
-    def __init__(self, config_models):
-        self.pretrained_clip_cap_model_weights = torch.load(
-            config_models["pretrained_clip_cap_model_weights"], map_location="cpu"
-        )
-
-    def update(self, *args, **kwargs):
-        pass
+from gia_config import ServiceConfig
+from gia_config.nn_models_config import ImageCaptionModelType
 
 
 class ExecutionPipelineResourcesInitializer(BasicPipelineResourcesInitializer):
@@ -39,16 +29,10 @@ class ExecutionPipelineResourcesInitializer(BasicPipelineResourcesInitializer):
 
 
 class ExecutionPipeline(BasicPipeline):
-    def __init__(self, config_models):
-        nn_models = ExecutionPipelineNNModelsInitializer(
-            config_models
-        )
+    def __init__(self, config: ServiceConfig):
         sequential_pipes = [
-            ClipCapHelper(
-                nn_models_map=ClipCapHelperNNModelsMap(
-                    pretrained_clip_cap_model_weights=nn_models.pretrained_clip_cap_model_weights
-                ),
-                resources_map=ClipCapHelperResourcesMap(),
+            ImageCaptionHelper(
+                config=config,
                 turn_on=True,
                 **{"use_beam_search": True}
             )
@@ -62,4 +46,7 @@ class ExecutionPipeline(BasicPipeline):
             sequential_execute_orders: Optional[List[int]] = None,
             *args,
             **kwargs):
-        self.run_sequential(message, addition_sequential_pipes, sequential_execute_orders, *args, **kwargs)
+        try:
+            self.run_sequential(message, addition_sequential_pipes, sequential_execute_orders, *args, **kwargs)
+        except:
+            raise

@@ -6,6 +6,7 @@
 # @Description:
 # @LastEditBy :
 
+from enum import Enum
 from os.path import abspath, dirname, join
 import sys
 from typing import *
@@ -19,18 +20,33 @@ from gia_model.pipeline import (
 
 __dir_models = join(ROOT, "gia_src/nn_models")
 
-__shared_nn_models = {
+_shared_nn_models = {
     "ClipCap_coco_weights": join(__dir_models, "ClipCap/coco_weights.pt"),
-    "ClipCap_conceptual_weights": join(__dir_models, "ClipCap/conceptual_weights.pt")
+    "ClipCap_conceptual_weights": join(__dir_models, "ClipCap/conceptual_weights.pt"),
+    "Blip_caption_base_weights": join(__dir_models, "Blip/blip_base_caption.pth"),
+    "Blip_caption_large_weights": join(__dir_models, "Blip/blip_large_caption.pth"),
 }
 
 
-def build_nn_models_config(
-        *args,
-        **kwargs
-) -> Dict[str, Dict[str, str]]:
-    return {
-        NAME_EXECUTION_PIPELINE_NN_MODELS_INITIALIZER: {
-            "pretrained_clip_cap_model_weights": __shared_nn_models["ClipCap_coco_weights"]
-        }
-    }
+class ImageCaptionModelType(Enum):
+    ClipCap = 0
+    Blip = 1
+
+
+class ClipCapModelConfig:
+    coco = _shared_nn_models["ClipCap_coco_weights"]
+    conceptual = _shared_nn_models["ClipCap_conceptual_weights"]
+
+
+class BlipModelConfig:
+    caption_base = _shared_nn_models["Blip_caption_base_weights"]
+    caption_large = _shared_nn_models["Blip_caption_large_weights"]
+
+
+class ImageCaptionModelConfig:
+    clip_cap = ClipCapModelConfig()
+    blip = BlipModelConfig()
+
+
+class NNModelsConfig:
+    image_caption = ImageCaptionModelConfig()

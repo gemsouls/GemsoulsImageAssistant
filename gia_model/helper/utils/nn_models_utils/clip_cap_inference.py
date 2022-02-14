@@ -6,23 +6,26 @@
 # @Description:
 # @LastEditBy :
 
-
 import clip
-import os
-from torch import nn
 import numpy as np
+import os
+import sys
+from torch import nn
 import torch
 import torch.nn.functional as nnf
-import sys
+import traceback
 from typing import *
+
+import PIL.Image
+import skimage.io as io
 from transformers import (
     GPT2Tokenizer,
     GPT2LMHeadModel,
     AdamW,
     get_linear_schedule_with_warmup,
 )
-import skimage.io as io
-import PIL.Image
+
+from gia_model.exception.image_exception import GiaImageTransformError
 
 
 N = type(None)
@@ -69,12 +72,18 @@ class Predictor:
     def predict(self, image: Union[str, Any], use_beam_search: bool = False):
         """Run a single prediction on the model"""
         model = self.model
-        if isinstance(image, str):
-            image = io.imread(image)
-            pil_image = PIL.Image.fromarray(image)
-        else:
-            pil_image = image
-        image = self.preprocess(pil_image).unsqueeze(0).to(self.device)
+        try:
+            if isinstance(image, str):
+                image = io.imread(image)
+                pil_image = PIL.Image.fromarray(image)
+            else:
+                pil_image = image
+            image = self.preprocess(pil_image).unsqueeze(0).to(self.device)
+        except:
+            raise GiaImageTransformError(
+                origin_err_msg=traceback.format_exc(),
+                additional_err_msg="transform image for [ClipCap] model to predict failed."
+            )
         with torch.no_grad():
             prefix = self.clip_model.encode_image(image).to(
                 self.device, dtype=torch.float32
