@@ -14,10 +14,6 @@ from typing import *
 ROOT = dirname(dirname(abspath(__file__)))
 sys.path.insert(0, ROOT)
 
-from gia_model.pipeline import (
-    NAME_EXECUTION_PIPELINE_NN_MODELS_INITIALIZER
-)
-
 __dir_models = join(ROOT, "gia_src/nn_models")
 
 _shared_nn_models = {

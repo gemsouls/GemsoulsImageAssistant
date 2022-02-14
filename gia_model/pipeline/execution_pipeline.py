@@ -11,21 +11,12 @@ from typing import *
 
 import torch
 
-from ..basic import BasicPipeline, BasicPipelineNNModelsInitializer, BasicPipelineResourcesInitializer
+from ..basic import BasicPipeline
 from ..helper import (
     ImageCaptionHelper
 )
 from ..message import TaskMessage
 from gia_config import ServiceConfig
-from gia_config.nn_models_config import ImageCaptionModelType
-
-
-class ExecutionPipelineResourcesInitializer(BasicPipelineResourcesInitializer):
-    def __init__(self):
-        pass
-
-    def update(self, *args, **kwargs):
-        pass
 
 
 class ExecutionPipeline(BasicPipeline):

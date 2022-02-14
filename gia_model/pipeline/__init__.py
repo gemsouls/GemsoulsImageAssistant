@@ -8,10 +8,6 @@
 
 
 from .execution_pipeline import (
-    ExecutionPipeline,
-    ExecutionPipelineNNModelsInitializer,
-    ExecutionPipelineResourcesInitializer
+    ExecutionPipeline
 )
 
-NAME_EXECUTION_PIPELINE_NN_MODELS_INITIALIZER = ExecutionPipelineNNModelsInitializer.__name__
-NAME_EXECUTION_PIPELINE_RESOURCES_INITIALIZER = ExecutionPipelineResourcesInitializer.__name__
