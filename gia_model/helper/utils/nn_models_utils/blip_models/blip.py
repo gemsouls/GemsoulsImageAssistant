@@ -77,7 +77,6 @@ class BLIP_Base(nn.Module):
 
 class BLIP_Decoder(nn.Module):
     def __init__(self,
-                 med_config='configs/med_config.json',
                  image_size=384,
                  vit='base',
                  vit_grad_ckpt=False,
@@ -94,7 +93,29 @@ class BLIP_Decoder(nn.Module):
 
         self.visual_encoder, vision_width = create_vit(vit, image_size, vit_grad_ckpt, vit_ckpt_layer)
         self.tokenizer = init_tokenizer()
-        med_config = BertConfig.from_json_file(med_config)
+        med_config = BertConfig.from_dict(
+            {
+                "architectures": [
+                    "BertModel"
+                ],
+                "attention_probs_dropout_prob": 0.1,
+                "hidden_act": "gelu",
+                "hidden_dropout_prob": 0.1,
+                "hidden_size": 768,
+                "initializer_range": 0.02,
+                "intermediate_size": 3072,
+                "layer_norm_eps": 1e-12,
+                "max_position_embeddings": 512,
+                "model_type": "bert",
+                "num_attention_heads": 12,
+                "num_hidden_layers": 12,
+                "pad_token_id": 0,
+                "type_vocab_size": 2,
+                "vocab_size": 30524,
+                "encoder_width": 768,
+                "add_cross_attention": True
+            }
+        )
         med_config.encoder_width = vision_width
         self.text_decoder = BertLMHeadModel(config=med_config)
 
