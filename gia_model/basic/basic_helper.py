@@ -26,8 +26,8 @@ class BasicHelperResourcesMap:
 class BasicHelper:
     def __init__(
             self,
-            nn_models_map: BasicHelperNNModelsMap,
-            resources_map: BasicHelperResourcesMap,
+            nn_models_map: BasicHelperNNModelsMap = None,
+            resources_map: BasicHelperResourcesMap = None,
             turn_on: bool = True,
             **additional_config
     ):

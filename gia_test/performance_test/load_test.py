@@ -49,7 +49,7 @@ async def send_messages_concurrently(url: str, num_messages: int = 10):
         ) as response:
             res = await response.json()
         finish_time = datetime.datetime.now()
-        print(f"task-{task_id} using {(finish_time-start_time).total_seconds(): .4f}s")
+        print(f"task-{task_id} [{img_path}] using {(finish_time-start_time).total_seconds(): .4f}s")
         print(res)
 
     image_paths = random.sample(get_fb_log_images(), num_messages)
@@ -74,7 +74,7 @@ def send_message_every_n_seconds(url: str, num_messages: int = 10, n: float = 0.
         )
         finish_time = datetime.datetime.now()
         res = response.json()
-        print(f"task-{post_id} using {(finish_time-start_time).total_seconds(): .4f}s")
+        print(f"task-{post_id} [{img_path}] using {(finish_time-start_time).total_seconds(): .4f}s")
         print(res)
 
     threads = []
