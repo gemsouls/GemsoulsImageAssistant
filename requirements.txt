@@ -1,0 +1,11 @@
+aiohttp==3.8.1
+git+https://github.com/openai/CLIP.git
+fastapi==0.70.1
+numpy==1.21.2
+Pillow==8.4.0
+pydantic==1.8.2
+requests==2.26.0
+scikit_image==0.18.1
+torch==1.10.0
+transformers==4.13.0
+uvicorn==0.13.4
