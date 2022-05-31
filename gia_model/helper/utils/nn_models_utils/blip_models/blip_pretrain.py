@@ -1,10 +1,10 @@
-'''
+"""
  * Copyright (c) 2022, salesforce.com, inc.
  * All rights reserved.
  * SPDX-License-Identifier: BSD-3-Clause
  * For full license text, see LICENSE.txt file in the repo root or https://opensource.org/licenses/BSD-3-Clause
  * By Junnan Li
-'''
+"""
 from .med import BertConfig, BertModel, BertLMHeadModel
 from transformers import BertTokenizer
 import transformers
@@ -19,16 +19,17 @@ from .blip import create_vit, init_tokenizer, load_checkpoint
 
 
 class BLIP_Pretrain(nn.Module):
-    def __init__(self,
-                 med_config='configs/bert_config.json',
-                 image_size=224,
-                 vit='base',
-                 vit_grad_ckpt=False,
-                 vit_ckpt_layer=0,
-                 embed_dim=256,
-                 queue_size=57600,
-                 momentum=0.995,
-                 ):
+    def __init__(
+        self,
+        med_config="configs/bert_config.json",
+        image_size=224,
+        vit="base",
+        vit_grad_ckpt=False,
+        vit_ckpt_layer=0,
+        embed_dim=256,
+        queue_size=57600,
+        momentum=0.995,
+    ):
         """
         Args:
             med_config (str): path for the mixture of encoder-decoder model's configuration file
@@ -39,22 +40,26 @@ class BLIP_Pretrain(nn.Module):
 
         self.visual_encoder, vision_width = create_vit(vit, image_size, vit_grad_ckpt, vit_ckpt_layer, 0)
 
-        if vit == 'base':
+        if vit == "base":
             checkpoint = torch.hub.load_state_dict_from_url(
                 url="https://dl.fbaipublicfiles.com/deit/deit_base_patch16_224-b5f2ef4d.pth",
-                map_location="cpu", check_hash=True)
+                map_location="cpu",
+                check_hash=True,
+            )
             state_dict = checkpoint["model"]
             msg = self.visual_encoder.load_state_dict(state_dict, strict=False)
-        elif vit == 'large':
+        elif vit == "large":
             from timm.models.helpers import load_custom_pretrained
             from timm.models.vision_transformer import default_cfgs
-            load_custom_pretrained(self.visual_encoder, default_cfgs['vit_large_patch16_224_in21k'])
+
+            load_custom_pretrained(self.visual_encoder, default_cfgs["vit_large_patch16_224_in21k"])
 
         self.tokenizer = init_tokenizer()
         encoder_config = BertConfig.from_json_file(med_config)
         encoder_config.encoder_width = vision_width
-        self.text_encoder = BertModel.from_pretrained('bert-base-uncased', config=encoder_config,
-                                                      add_pooling_layer=False)
+        self.text_encoder = BertModel.from_pretrained(
+            "bert-base-uncased", config=encoder_config, add_pooling_layer=False
+        )
         self.text_encoder.resize_token_embeddings(len(self.tokenizer))
 
         text_width = self.text_encoder.config.hidden_size
@@ -64,17 +69,18 @@ class BLIP_Pretrain(nn.Module):
 
         self.itm_head = nn.Linear(text_width, 2)
 
-        # create momentum encoders  
+        # create momentum encoders
         self.visual_encoder_m, vision_width = create_vit(vit, image_size)
         self.vision_proj_m = nn.Linear(vision_width, embed_dim)
         self.text_encoder_m = BertModel(config=encoder_config, add_pooling_layer=False)
         self.text_proj_m = nn.Linear(text_width, embed_dim)
 
-        self.model_pairs = [[self.visual_encoder, self.visual_encoder_m],
-                            [self.vision_proj, self.vision_proj_m],
-                            [self.text_encoder, self.text_encoder_m],
-                            [self.text_proj, self.text_proj_m],
-                            ]
+        self.model_pairs = [
+            [self.visual_encoder, self.visual_encoder_m],
+            [self.vision_proj, self.vision_proj_m],
+            [self.text_encoder, self.text_encoder_m],
+            [self.text_proj, self.text_proj_m],
+        ]
         self.copy_params()
 
         # create the queue
@@ -92,9 +98,9 @@ class BLIP_Pretrain(nn.Module):
         # create the decoder
         decoder_config = BertConfig.from_json_file(med_config)
         decoder_config.encoder_width = vision_width
-        self.text_decoder = BertLMHeadModel.from_pretrained('bert-base-uncased', config=decoder_config)
+        self.text_decoder = BertLMHeadModel.from_pretrained("bert-base-uncased", config=decoder_config)
         self.text_decoder.resize_token_embeddings(len(self.tokenizer))
-        tie_encoder_decoder_weights(self.text_decoder.bert, self.text_encoder, '', '/attention')
+        tie_encoder_decoder_weights(self.text_decoder.bert, self.text_encoder, "", "/attention")
 
     def forward(self, image, caption, alpha):
         with torch.no_grad():
@@ -104,10 +110,12 @@ class BLIP_Pretrain(nn.Module):
         image_atts = torch.ones(image_embeds.size()[:-1], dtype=torch.long).to(image.device)
         image_feat = F.normalize(self.vision_proj(image_embeds[:, 0, :]), dim=-1)
 
-        text = self.tokenizer(caption, padding='max_length', truncation=True, max_length=30,
-                              return_tensors="pt").to(image.device)
-        text_output = self.text_encoder(text.input_ids, attention_mask=text.attention_mask,
-                                        return_dict=True, mode='text')
+        text = self.tokenizer(caption, padding="max_length", truncation=True, max_length=30, return_tensors="pt").to(
+            image.device
+        )
+        text_output = self.text_encoder(
+            text.input_ids, attention_mask=text.attention_mask, return_dict=True, mode="text"
+        )
         text_feat = F.normalize(self.text_proj(text_output.last_hidden_state[:, 0, :]), dim=-1)
 
         # get momentum features
@@ -117,8 +125,9 @@ class BLIP_Pretrain(nn.Module):
             image_feat_m = F.normalize(self.vision_proj_m(image_embeds_m[:, 0, :]), dim=-1)
             image_feat_all = torch.cat([image_feat_m.t(), self.image_queue.clone().detach()], dim=1)
 
-            text_output_m = self.text_encoder_m(text.input_ids, attention_mask=text.attention_mask,
-                                                return_dict=True, mode='text')
+            text_output_m = self.text_encoder_m(
+                text.input_ids, attention_mask=text.attention_mask, return_dict=True, mode="text"
+            )
             text_feat_m = F.normalize(self.text_proj_m(text_output_m.last_hidden_state[:, 0, :]), dim=-1)
             text_feat_all = torch.cat([text_feat_m.t(), self.text_queue.clone().detach()], dim=1)
 
@@ -147,12 +156,13 @@ class BLIP_Pretrain(nn.Module):
 
         # forward the positve image-text pair
         bs = image.size(0)
-        output_pos = self.text_encoder(encoder_input_ids,
-                                       attention_mask=text.attention_mask,
-                                       encoder_hidden_states=image_embeds,
-                                       encoder_attention_mask=image_atts,
-                                       return_dict=True,
-                                       )
+        output_pos = self.text_encoder(
+            encoder_input_ids,
+            attention_mask=text.attention_mask,
+            encoder_hidden_states=image_embeds,
+            encoder_attention_mask=image_atts,
+            return_dict=True,
+        )
         with torch.no_grad():
             weights_t2i = F.softmax(sim_t2i[:, :bs], dim=1) + 1e-4
             weights_t2i.fill_diagonal_(0)
@@ -183,32 +193,37 @@ class BLIP_Pretrain(nn.Module):
         image_embeds_all = torch.cat([image_embeds_neg, image_embeds], dim=0)
         image_atts_all = torch.cat([image_atts, image_atts], dim=0)
 
-        output_neg = self.text_encoder(text_ids_all,
-                                       attention_mask=text_atts_all,
-                                       encoder_hidden_states=image_embeds_all,
-                                       encoder_attention_mask=image_atts_all,
-                                       return_dict=True,
-                                       )
+        output_neg = self.text_encoder(
+            text_ids_all,
+            attention_mask=text_atts_all,
+            encoder_hidden_states=image_embeds_all,
+            encoder_attention_mask=image_atts_all,
+            return_dict=True,
+        )
 
-        vl_embeddings = torch.cat([output_pos.last_hidden_state[:, 0, :], output_neg.last_hidden_state[:, 0, :]], dim=0)
+        vl_embeddings = torch.cat(
+            [output_pos.last_hidden_state[:, 0, :], output_neg.last_hidden_state[:, 0, :]], dim=0
+        )
         vl_output = self.itm_head(vl_embeddings)
 
-        itm_labels = torch.cat([torch.ones(bs, dtype=torch.long), torch.zeros(2 * bs, dtype=torch.long)],
-                               dim=0).to(image.device)
+        itm_labels = torch.cat([torch.ones(bs, dtype=torch.long), torch.zeros(2 * bs, dtype=torch.long)], dim=0).to(
+            image.device
+        )
         loss_itm = F.cross_entropy(vl_output, itm_labels)
 
-        ##================= LM ========================##     
+        ##================= LM ========================##
         decoder_input_ids = text.input_ids.clone()
         decoder_input_ids[:, 0] = self.tokenizer.bos_token_id
         decoder_targets = decoder_input_ids.masked_fill(decoder_input_ids == self.tokenizer.pad_token_id, -100)
 
-        decoder_output = self.text_decoder(decoder_input_ids,
-                                           attention_mask=text.attention_mask,
-                                           encoder_hidden_states=image_embeds,
-                                           encoder_attention_mask=image_atts,
-                                           labels=decoder_targets,
-                                           return_dict=True,
-                                           )
+        decoder_output = self.text_decoder(
+            decoder_input_ids,
+            attention_mask=text.attention_mask,
+            encoder_hidden_states=image_embeds,
+            encoder_attention_mask=image_atts,
+            labels=decoder_targets,
+            return_dict=True,
+        )
 
         loss_lm = decoder_output.loss
         return loss_ita, loss_itm, loss_lm
@@ -218,13 +233,13 @@ class BLIP_Pretrain(nn.Module):
         for model_pair in self.model_pairs:
             for param, param_m in zip(model_pair[0].parameters(), model_pair[1].parameters()):
                 param_m.data.copy_(param.data)  # initialize
-                param_m.requires_grad = False  # not update by gradient    
+                param_m.requires_grad = False  # not update by gradient
 
     @torch.no_grad()
     def _momentum_update(self):
         for model_pair in self.model_pairs:
             for param, param_m in zip(model_pair[0].parameters(), model_pair[1].parameters()):
-                param_m.data = param_m.data * self.momentum + param.data * (1. - self.momentum)
+                param_m.data = param_m.data * self.momentum + param.data * (1.0 - self.momentum)
 
     @torch.no_grad()
     def _dequeue_and_enqueue(self, image_feat, text_feat):
@@ -238,8 +253,8 @@ class BLIP_Pretrain(nn.Module):
         assert self.queue_size % batch_size == 0  # for simplicity
 
         # replace the keys at ptr (dequeue and enqueue)
-        self.image_queue[:, ptr:ptr + batch_size] = image_feats.T
-        self.text_queue[:, ptr:ptr + batch_size] = text_feats.T
+        self.image_queue[:, ptr : ptr + batch_size] = image_feats.T
+        self.text_queue[:, ptr : ptr + batch_size] = text_feats.T
         ptr = (ptr + batch_size) % self.queue_size  # move pointer
 
         self.queue_ptr[0] = ptr
@@ -256,8 +271,7 @@ def concat_all_gather(tensor):
     Performs all_gather operation on the provided tensors.
     *** Warning ***: torch.distributed.all_gather has no gradient.
     """
-    tensors_gather = [torch.ones_like(tensor)
-                      for _ in range(torch.distributed.get_world_size())]
+    tensors_gather = [torch.ones_like(tensor) for _ in range(torch.distributed.get_world_size())]
     torch.distributed.all_gather(tensors_gather, tensor, async_op=False)
 
     output = torch.cat(tensors_gather, dim=0)
@@ -291,7 +305,7 @@ def tie_encoder_decoder_weights(encoder: nn.Module, decoder: nn.Module, base_mod
             if hasattr(decoder_pointer, "bias"):
                 assert hasattr(encoder_pointer, "bias")
                 encoder_pointer.bias = decoder_pointer.bias
-            print(module_name + ' is tied')
+            print(module_name + " is tied")
             return
 
         encoder_modules = encoder_pointer._modules

@@ -25,11 +25,11 @@ class BasicHelperResourcesMap:
 
 class BasicHelper:
     def __init__(
-            self,
-            nn_models_map: BasicHelperNNModelsMap = None,
-            resources_map: BasicHelperResourcesMap = None,
-            turn_on: bool = True,
-            **additional_config
+        self,
+        nn_models_map: BasicHelperNNModelsMap = None,
+        resources_map: BasicHelperResourcesMap = None,
+        turn_on: bool = True,
+        **additional_config
     ):
         self.nn_models_map = nn_models_map
         self.resources_map = resources_map

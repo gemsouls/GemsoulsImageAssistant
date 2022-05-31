@@ -42,13 +42,11 @@ class AppManager:
         self.execution_process_handler = ExecutionProcessHandler(
             process=ExecutionProcess,
             pipeline=ExecutionPipeline,
-            pipeline_init_kwargs={
-                "config": self.service_config
-            },
+            pipeline_init_kwargs={"config": self.service_config},
             input_queue=self.queues.execution_input_queue,
             output_queues=[self.queues.system_output_queue],
             failure_queue=self.queues.system_output_queue,
-            n_proc=1
+            n_proc=1,
         )
         print(f"[{datetime.now()}]->[{self.__class__.__name__}]->process handlers started")
 
@@ -80,25 +78,26 @@ class AppManager:
             else:
                 task_id = task_message.input_message.task_id
                 self.result_pool[task_id] = task_message
-                print(f"[{datetime.now()}]->[AssistantManager]->get task-{task_id} from system output queue "
-                      f"and added to result pool.")
+                print(
+                    f"[{datetime.now()}]->[AssistantManager]->get task-{task_id} from system output queue "
+                    f"and added to result pool."
+                )
                 time.sleep(0.1)
 
 
 # ===== init app ===== #
 app = FastAPI()
 
+
 # ===== init app manager ===== #
 app_manager: AppManager = None
-
 
 # ===== define routes ===== #
 @app.on_event("startup")
 async def startup_event():
     global app_manager
-    service_config = ServiceConfig(
-        image_caption_model_type=ImageCaptionModelType.Blip
-    )
+    # service_config = ServiceConfig(image_caption_model_type=ImageCaptionModelType.ClipCap)
+    service_config = ServiceConfig(image_caption_model_type=ImageCaptionModelType.Blip)
     app_manager = AppManager(service_config)
     app_manager.start()
 
@@ -128,3 +127,6 @@ async def image2text(input_message: TaskInputMessage):
 @app.get("/hello")
 async def hello():
     return {"result": "hello world!"}
+
+
+app.mount("/image2text", app)

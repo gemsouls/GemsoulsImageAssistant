@@ -7,7 +7,4 @@
 # @LastEditBy :
 
 
-from .execution_pipeline import (
-    ExecutionPipeline
-)
-
+from .execution_pipeline import ExecutionPipeline

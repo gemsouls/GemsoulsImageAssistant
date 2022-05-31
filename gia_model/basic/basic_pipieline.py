@@ -26,13 +26,14 @@ class BasicPipelineResourcesInitializer:
 
 
 class BasicPipeline:
-    def __init__(self,
-                 sequential_pipes: Optional[List[Callable]] = None,
-                 async_pipes: Optional[List[Callable]] = None,
-                 sequential_pipes_execute_orders: Optional[List[int]] = None,
-                 *args,
-                 **kwargs
-                 ):
+    def __init__(
+        self,
+        sequential_pipes: Optional[List[Callable]] = None,
+        async_pipes: Optional[List[Callable]] = None,
+        sequential_pipes_execute_orders: Optional[List[int]] = None,
+        *args,
+        **kwargs
+    ):
         self.default_sequential_pipes = sequential_pipes
         self.default_async_pipes = async_pipes
         if self.default_sequential_pipes is None:
@@ -50,12 +51,14 @@ class BasicPipeline:
         assert len(pipes) == len(execute_orders)
         return [each[0] for each in sorted(zip(pipes, execute_orders), key=lambda x: x[1])]
 
-    def run_sequential(self,
-                       message: BasicMessage,
-                       addition_pipes: Optional[List[Callable]] = None,
-                       execute_orders: Optional[List[int]] = None,
-                       *args,
-                       **kwargs):
+    def run_sequential(
+        self,
+        message: BasicMessage,
+        addition_pipes: Optional[List[Callable]] = None,
+        execute_orders: Optional[List[int]] = None,
+        *args,
+        **kwargs
+    ):
         if addition_pipes is None:
             addition_pipes = []
         pipes = self.default_sequential_pipes + addition_pipes
@@ -64,32 +67,27 @@ class BasicPipeline:
 
         if pipes:
             for idx, pipe in enumerate(pipes):
-                asyncio.run(pipe(message, *args, **kwargs.get(str(idx), dict()))) \
-                    if asyncio.iscoroutinefunction(pipe) \
-                    else pipe(message, *args, **kwargs.get(str(idx), dict()))
+                asyncio.run(pipe(message, *args, **kwargs.get(str(idx), dict()))) if asyncio.iscoroutinefunction(
+                    pipe
+                ) else pipe(message, *args, **kwargs.get(str(idx), dict()))
 
-    async def run_async(self,
-                        message: BasicMessage,
-                        addition_pipes: Optional[List[Callable]] = None,
-                        *args,
-                        **kwargs):
+    async def run_async(self, message: BasicMessage, addition_pipes: Optional[List[Callable]] = None, *args, **kwargs):
         if addition_pipes is None:
             addition_pipes = []
         pipes = self.default_async_pipes + addition_pipes
         if pipes:
             await asyncio.gather(
-                *[
-                    pipe(message, *args, **kwargs.get(str(idx), dict()))
-                    for idx, pipe in enumerate(pipes)
-                ]
+                *[pipe(message, *args, **kwargs.get(str(idx), dict())) for idx, pipe in enumerate(pipes)]
             )
 
     @abstractmethod
-    def run(self,
-            message: BasicMessage,
-            addition_sequential_pipes: Optional[List[Callable]] = None,
-            addition_async_pipes: Optional[List[Callable]] = None,
-            sequential_execute_orders: Optional[List[int]] = None,
-            *args,
-            **kwargs):
+    def run(
+        self,
+        message: BasicMessage,
+        addition_sequential_pipes: Optional[List[Callable]] = None,
+        addition_async_pipes: Optional[List[Callable]] = None,
+        sequential_execute_orders: Optional[List[int]] = None,
+        *args,
+        **kwargs
+    ):
         raise NotImplementedError

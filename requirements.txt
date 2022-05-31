@@ -1,13 +1,16 @@
 aiohttp==3.8.1
-git+https://github.com/openai/CLIP.git
+# git+https://github.com/openai/CLIP.git # git clone不下来的时候切换到CLIP目录，python setup.py install 
 fastapi==0.70.1
 numpy==1.21.2
 Pillow==8.4.0
 pydantic==1.8.2
 requests==2.26.0
 scikit_image==0.18.1
-torch==1.10.0
+# torch==1.10.0
 transformers==4.15.0
 uvicorn==0.13.4
 timm==0.4.12
 fairscale==0.4.4
+opencv-python==4.5.5.64
+starlette==0.16.0
+h11==0.13.0

@@ -57,9 +57,7 @@ class Predictor:
         """Load the model into memory to make running multiple predictions efficient"""
 
         self.device = GPU if torch.cuda.is_available() else CPU
-        self.clip_model, self.preprocess = clip.load(
-            "ViT-B/32", device=self.device, jit=False
-        )
+        self.clip_model, self.preprocess = clip.load("ViT-B/32", device=self.device, jit=False)
         self.tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
 
         self.prefix_length = 10
@@ -72,22 +70,8 @@ class Predictor:
     def predict(self, image: Union[str, Any], use_beam_search: bool = False):
         """Run a single prediction on the model"""
         model = self.model
-        try:
-            if isinstance(image, str):
-                image = io.imread(image)
-                pil_image = PIL.Image.fromarray(image)
-            else:
-                pil_image = image
-            image = self.preprocess(pil_image).unsqueeze(0).to(self.device)
-        except:
-            raise GiaImageTransformError(
-                origin_err_msg=traceback.format_exc(),
-                additional_err_msg="transform image for [ClipCap] model to predict failed."
-            )
         with torch.no_grad():
-            prefix = self.clip_model.encode_image(image).to(
-                self.device, dtype=torch.float32
-            )
+            prefix = self.clip_model.encode_image(image).to(self.device, dtype=torch.float32)
             prefix_embed = model.clip_project(prefix).reshape(1, self.prefix_length, -1)
         if use_beam_search:
             return generate_beam(model, self.tokenizer, embed=prefix_embed)[0]
@@ -110,19 +94,12 @@ class MLP(nn.Module):
 
 
 class ClipCaptionModel(nn.Module):
-
     def get_dummy_token(self, batch_size: int, device: D) -> T:
-        return torch.zeros(
-            batch_size, self.prefix_length, dtype=torch.int64, device=device
-        )
+        return torch.zeros(batch_size, self.prefix_length, dtype=torch.int64, device=device)
 
-    def forward(
-        self, tokens: T, prefix: T, mask: Optional[T] = None, labels: Optional[T] = None
-    ):
+    def forward(self, tokens: T, prefix: T, mask: Optional[T] = None, labels: Optional[T] = None):
         embedding_text = self.gpt.transformer.wte(tokens)
-        prefix_projections = self.clip_project(prefix).view(
-            -1, self.prefix_length, self.gpt_embedding_size
-        )
+        prefix_projections = self.clip_project(prefix).view(-1, self.prefix_length, self.gpt_embedding_size)
         # print(embedding_text.size()) #torch.Size([5, 67, 768])
         # print(prefix_projections.size()) #torch.Size([5, 1, 768])
         embedding_cat = torch.cat((prefix_projections, embedding_text), dim=1)
@@ -202,9 +179,7 @@ def generate_beam(
                 scores_sum = scores[:, None] + logits
                 seq_lengths[~is_stopped] += 1
                 scores_sum_average = scores_sum / seq_lengths[:, None]
-                scores_sum_average, next_tokens = scores_sum_average.view(-1).topk(
-                    beam_size, -1
-                )
+                scores_sum_average, next_tokens = scores_sum_average.view(-1).topk(beam_size, -1)
                 next_tokens_source = next_tokens // scores_sum.shape[1]
                 seq_lengths = seq_lengths[next_tokens_source]
                 next_tokens = next_tokens % scores_sum.shape[1]
@@ -214,19 +189,14 @@ def generate_beam(
                 generated = generated[next_tokens_source]
                 scores = scores_sum_average * seq_lengths
                 is_stopped = is_stopped[next_tokens_source]
-            next_token_embed = model.gpt.transformer.wte(next_tokens.squeeze()).view(
-                generated.shape[0], 1, -1
-            )
+            next_token_embed = model.gpt.transformer.wte(next_tokens.squeeze()).view(generated.shape[0], 1, -1)
             generated = torch.cat((generated, next_token_embed), dim=1)
             is_stopped = is_stopped + next_tokens.eq(stop_token_index).squeeze()
             if is_stopped.all():
                 break
     scores = scores / seq_lengths
     output_list = tokens.cpu().numpy()
-    output_texts = [
-        tokenizer.decode(output[: int(length)])
-        for output, length in zip(output_list, seq_lengths)
-    ]
+    output_texts = [tokenizer.decode(output[: int(length)]) for output, length in zip(output_list, seq_lengths)]
     order = scores.argsort(descending=True)
     output_texts = [output_texts[i] for i in order]
     return output_texts
@@ -269,13 +239,9 @@ def generate2(
                 logits = outputs.logits
                 logits = logits[:, -1, :] / (temperature if temperature > 0 else 1.0)
                 sorted_logits, sorted_indices = torch.sort(logits, descending=True)
-                cumulative_probs = torch.cumsum(
-                    nnf.softmax(sorted_logits, dim=-1), dim=-1
-                )
+                cumulative_probs = torch.cumsum(nnf.softmax(sorted_logits, dim=-1), dim=-1)
                 sorted_indices_to_remove = cumulative_probs > top_p
-                sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[
-                    ..., :-1
-                ].clone()
+                sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[..., :-1].clone()
                 sorted_indices_to_remove[..., 0] = 0
 
                 indices_to_remove = sorted_indices[sorted_indices_to_remove]

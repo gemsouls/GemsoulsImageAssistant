@@ -42,6 +42,7 @@ class BlipModelConfig:
 class ImageCaptionModelConfig:
     clip_cap = ClipCapModelConfig()
     blip = BlipModelConfig()
+    device = "cuda:0"  # cpu or cuda:0
 
 
 class NNModelsConfig:

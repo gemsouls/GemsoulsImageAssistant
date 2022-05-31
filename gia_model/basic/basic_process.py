@@ -6,7 +6,7 @@
 # @Description:
 # @LastEditBy :
 
-from abc import  abstractmethod
+from abc import abstractmethod
 import asyncio
 from queue import Queue, Empty, Full
 import time
@@ -21,14 +21,16 @@ from ..message import TaskMessage
 class BasicTaskProcess:
     pipeline: BasicPipeline
 
-    def __init__(self,
-                 proc_id: int,
-                 pipeline: Callable,
-                 pipeline_init_kwargs: Dict[str, Any],
-                 input_queue: Queue,
-                 output_queues: List[Queue],
-                 failure_queue: Queue,
-                 default_pipeline_execution_additional_kwargs: Dict[str, Any]):
+    def __init__(
+        self,
+        proc_id: int,
+        pipeline: Callable,
+        pipeline_init_kwargs: Dict[str, Any],
+        input_queue: Queue,
+        output_queues: List[Queue],
+        failure_queue: Queue,
+        default_pipeline_execution_additional_kwargs: Dict[str, Any],
+    ):
         self._is_running = True
 
         self.proc_id = proc_id
@@ -44,6 +46,7 @@ class BasicTaskProcess:
 
     def run(self) -> None:
         print(f"[{self.__class__.__name__}]->process start running.")
+
         def _execute(cls):
             while cls._is_running:
                 # get task message from queue
@@ -56,15 +59,11 @@ class BasicTaskProcess:
                 task_id = task_message.input_message.task_id
                 try:
                     # 运行任务
-                    print(
-                        f"[{cls.__class__.__name__}-{cls.proc_id}]->task-{task_id}->executing task-{task_id}..."
-                    )
+                    print(f"[{cls.__class__.__name__}-{cls.proc_id}]->task-{task_id}->executing task-{task_id}...")
                     cls.execute_pipeline(task_message)
                 except:
                     # 记录异常信息
-                    print(
-                        f"[{cls.__class__.__name__}-{cls.proc_id}]->task-{task_id}->execute task-{task_id} failed."
-                    )
+                    print(f"[{cls.__class__.__name__}-{cls.proc_id}]->task-{task_id}->execute task-{task_id} failed.")
                     print(
                         f"[{cls.__class__.__name__}-{cls.proc_id}]->task-{task_id}->failed reason:\n"
                         f"{traceback.format_exc()}",
@@ -130,16 +129,17 @@ class BasicTaskProcess:
 
 
 class BasicTaskProcessHandler:
-    def __init__(self,
-                 process: Callable,
-                 pipeline: Callable,
-                 pipeline_init_kwargs: Dict[str, Any],
-                 input_queue: Queue,
-                 output_queues: List[Queue],
-                 failure_queue: Queue,
-                 n_proc: int = 1,
-                 default_pipeline_additional_execution_kwargs: Dict[str, Any] = None
-                 ):
+    def __init__(
+        self,
+        process: Callable,
+        pipeline: Callable,
+        pipeline_init_kwargs: Dict[str, Any],
+        input_queue: Queue,
+        output_queues: List[Queue],
+        failure_queue: Queue,
+        n_proc: int = 1,
+        default_pipeline_additional_execution_kwargs: Dict[str, Any] = None,
+    ):
         self._accept_input = True
 
         if not default_pipeline_additional_execution_kwargs:
@@ -152,8 +152,9 @@ class BasicTaskProcessHandler:
                 input_queue,
                 output_queues,
                 failure_queue,
-                default_pipeline_additional_execution_kwargs
-            ) for i in range(n_proc)
+                default_pipeline_additional_execution_kwargs,
+            )
+            for i in range(n_proc)
         ]
         self.input_queue = input_queue
         self.failure_queue = failure_queue
@@ -177,11 +178,7 @@ class BasicTaskProcessHandler:
 
 
 class BaseFailureProcess:
-    def __init__(self,
-                 input_queue: Queue,
-                 system_output_queue: Queue,
-                 redirect_output_queue: Queue
-                 ):
+    def __init__(self, input_queue: Queue, system_output_queue: Queue, redirect_output_queue: Queue):
         self._is_running = True
 
         self.input_queue = input_queue
@@ -204,10 +201,7 @@ class BaseFailureProcess:
                 try:
                     cls.process_failed_message(failed_message)
                 except:
-                    cls.logger.error(
-                        f"[{self.__class__.__name__}]->_execute->error message:\n",
-                        exc_info=True
-                    )
+                    cls.logger.error(f"[{self.__class__.__name__}]->_execute->error message:\n", exc_info=True)
                 finally:
                     cls.input_queue.task_done()
 
@@ -230,17 +224,14 @@ class BaseFailureProcess:
 
 
 class BaseFailureProcessHandler:
-    def __init__(self,
-                 input_queue: Queue,
-                 system_output_queue: Queue,
-                 redirect_output_queue: Queue):
+    def __init__(self, input_queue: Queue, system_output_queue: Queue, redirect_output_queue: Queue):
         self.input_queue = input_queue
         self.system_output_queue = system_output_queue
         self.redirect_output_queue = redirect_output_queue
         self.process = BaseFailureProcess(
             input_queue=input_queue,
             system_output_queue=system_output_queue,
-            redirect_output_queue=redirect_output_queue
+            redirect_output_queue=redirect_output_queue,
         )
 
     async def add_task(self, task_message: TaskMessage):

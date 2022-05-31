@@ -28,8 +28,7 @@ class ExecutionProcess(BasicTaskProcess):
     def output_message(self, message: TaskMessage):
         task_id = message.input_message.task_id
         print(
-            f"[{self.__class__.__name__}-{self.proc_id}]->"
-            f"task-{task_id}->sent task_message to system_output_queue"
+            f"[{self.__class__.__name__}-{self.proc_id}]->" f"task-{task_id}->sent task_message to system_output_queue"
         )
         self.output_queues_map["system_output_queue"].put_nowait(message)
 

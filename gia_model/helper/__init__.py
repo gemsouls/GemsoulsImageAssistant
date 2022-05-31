@@ -6,6 +6,4 @@
 # @Description:
 # @LastEditBy :
 
-from .image_captioning_helper import (
-    ImageCaptionHelper
-)
+from .image_captioning_helper import ImageCaptionHelper

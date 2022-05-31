@@ -24,11 +24,11 @@ class BasicCheckerResourcesMap:
 
 class BasicChecker:
     def __init__(
-            self,
-            nn_models_map: BasicCheckerNNModelsMap,
-            resources_map: BasicCheckerResourcesMap,
-            turn_on: bool = True,
-            **additional_config
+        self,
+        nn_models_map: BasicCheckerNNModelsMap,
+        resources_map: BasicCheckerResourcesMap,
+        turn_on: bool = True,
+        **additional_config
     ):
         self.nn_models_map = nn_models_map
         self.resources_map = resources_map

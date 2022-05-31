@@ -9,17 +9,18 @@ from .blip import create_vit, init_tokenizer, load_checkpoint
 
 
 class BLIP_Retrieval(nn.Module):
-    def __init__(self,
-                 med_config='configs/med_config.json',
-                 image_size=384,
-                 vit='base',
-                 vit_grad_ckpt=False,
-                 vit_ckpt_layer=0,
-                 embed_dim=256,
-                 queue_size=57600,
-                 momentum=0.995,
-                 negative_all_rank=False,
-                 ):
+    def __init__(
+        self,
+        med_config="configs/med_config.json",
+        image_size=384,
+        vit="base",
+        vit_grad_ckpt=False,
+        vit_ckpt_layer=0,
+        embed_dim=256,
+        queue_size=57600,
+        momentum=0.995,
+        negative_all_rank=False,
+    ):
         """
         Args:
             med_config (str): path for the mixture of encoder-decoder model's configuration file
@@ -41,17 +42,18 @@ class BLIP_Retrieval(nn.Module):
 
         self.itm_head = nn.Linear(text_width, 2)
 
-        # create momentum encoders  
+        # create momentum encoders
         self.visual_encoder_m, vision_width = create_vit(vit, image_size)
         self.vision_proj_m = nn.Linear(vision_width, embed_dim)
         self.text_encoder_m = BertModel(config=med_config, add_pooling_layer=False)
         self.text_proj_m = nn.Linear(text_width, embed_dim)
 
-        self.model_pairs = [[self.visual_encoder, self.visual_encoder_m],
-                            [self.vision_proj, self.vision_proj_m],
-                            [self.text_encoder, self.text_encoder_m],
-                            [self.text_proj, self.text_proj_m],
-                            ]
+        self.model_pairs = [
+            [self.visual_encoder, self.visual_encoder_m],
+            [self.vision_proj, self.vision_proj_m],
+            [self.text_encoder, self.text_encoder_m],
+            [self.text_proj, self.text_proj_m],
+        ]
         self.copy_params()
 
         # create the queue
@@ -77,11 +79,13 @@ class BLIP_Retrieval(nn.Module):
         image_atts = torch.ones(image_embeds.size()[:-1], dtype=torch.long).to(image.device)
         image_feat = F.normalize(self.vision_proj(image_embeds[:, 0, :]), dim=-1)
 
-        text = self.tokenizer(caption, padding='max_length', truncation=True, max_length=35,
-                              return_tensors="pt").to(image.device)
+        text = self.tokenizer(caption, padding="max_length", truncation=True, max_length=35, return_tensors="pt").to(
+            image.device
+        )
 
-        text_output = self.text_encoder(text.input_ids, attention_mask=text.attention_mask,
-                                        return_dict=True, mode='text')
+        text_output = self.text_encoder(
+            text.input_ids, attention_mask=text.attention_mask, return_dict=True, mode="text"
+        )
         text_feat = F.normalize(self.text_proj(text_output.last_hidden_state[:, 0, :]), dim=-1)
 
         ###============== Image-text Contrastive Learning ===================###
@@ -97,8 +101,9 @@ class BLIP_Retrieval(nn.Module):
             image_feat_m = F.normalize(self.vision_proj_m(image_embeds_m[:, 0, :]), dim=-1)
             image_feat_m_all = torch.cat([image_feat_m.t(), self.image_queue.clone().detach()], dim=1)
 
-            text_output_m = self.text_encoder_m(text.input_ids, attention_mask=text.attention_mask,
-                                                return_dict=True, mode='text')
+            text_output_m = self.text_encoder_m(
+                text.input_ids, attention_mask=text.attention_mask, return_dict=True, mode="text"
+            )
             text_feat_m = F.normalize(self.text_proj_m(text_output_m.last_hidden_state[:, 0, :]), dim=-1)
             text_feat_m_all = torch.cat([text_feat_m.t(), self.text_queue.clone().detach()], dim=1)
 
@@ -128,12 +133,13 @@ class BLIP_Retrieval(nn.Module):
 
         # forward the positve image-text pair
         bs = image.size(0)
-        output_pos = self.text_encoder(encoder_input_ids,
-                                       attention_mask=text.attention_mask,
-                                       encoder_hidden_states=image_embeds,
-                                       encoder_attention_mask=image_atts,
-                                       return_dict=True,
-                                       )
+        output_pos = self.text_encoder(
+            encoder_input_ids,
+            attention_mask=text.attention_mask,
+            encoder_hidden_states=image_embeds,
+            encoder_attention_mask=image_atts,
+            return_dict=True,
+        )
 
         if self.negative_all_rank:
             # compute sample similarity
@@ -192,7 +198,7 @@ class BLIP_Retrieval(nn.Module):
                 image_embeds_neg.append(image_embeds[neg_idx])
             image_embeds_neg = torch.stack(image_embeds_neg, dim=0)
 
-            # select a negative text (from same rank) for each image    
+            # select a negative text (from same rank) for each image
             text_ids_neg = []
             text_atts_neg = []
             for b in range(bs):
@@ -209,18 +215,22 @@ class BLIP_Retrieval(nn.Module):
         image_embeds_all = torch.cat([image_embeds_neg, image_embeds], dim=0)
         image_atts_all = torch.cat([image_atts, image_atts], dim=0)
 
-        output_neg = self.text_encoder(text_ids_all,
-                                       attention_mask=text_atts_all,
-                                       encoder_hidden_states=image_embeds_all,
-                                       encoder_attention_mask=image_atts_all,
-                                       return_dict=True,
-                                       )
+        output_neg = self.text_encoder(
+            text_ids_all,
+            attention_mask=text_atts_all,
+            encoder_hidden_states=image_embeds_all,
+            encoder_attention_mask=image_atts_all,
+            return_dict=True,
+        )
 
-        vl_embeddings = torch.cat([output_pos.last_hidden_state[:, 0, :], output_neg.last_hidden_state[:, 0, :]], dim=0)
+        vl_embeddings = torch.cat(
+            [output_pos.last_hidden_state[:, 0, :], output_neg.last_hidden_state[:, 0, :]], dim=0
+        )
         vl_output = self.itm_head(vl_embeddings)
 
-        itm_labels = torch.cat([torch.ones(bs, dtype=torch.long), torch.zeros(2 * bs, dtype=torch.long)],
-                               dim=0).to(image.device)
+        itm_labels = torch.cat([torch.ones(bs, dtype=torch.long), torch.zeros(2 * bs, dtype=torch.long)], dim=0).to(
+            image.device
+        )
         loss_itm = F.cross_entropy(vl_output, itm_labels)
 
         return loss_ita, loss_itm
@@ -230,13 +240,13 @@ class BLIP_Retrieval(nn.Module):
         for model_pair in self.model_pairs:
             for param, param_m in zip(model_pair[0].parameters(), model_pair[1].parameters()):
                 param_m.data.copy_(param.data)  # initialize
-                param_m.requires_grad = False  # not update by gradient    
+                param_m.requires_grad = False  # not update by gradient
 
     @torch.no_grad()
     def _momentum_update(self):
         for model_pair in self.model_pairs:
             for param, param_m in zip(model_pair[0].parameters(), model_pair[1].parameters()):
-                param_m.data = param_m.data * self.momentum + param.data * (1. - self.momentum)
+                param_m.data = param_m.data * self.momentum + param.data * (1.0 - self.momentum)
 
     @torch.no_grad()
     def _dequeue_and_enqueue(self, image_feat, text_feat, idxs):
@@ -250,15 +260,15 @@ class BLIP_Retrieval(nn.Module):
         assert self.queue_size % batch_size == 0  # for simplicity
 
         # replace the keys at ptr (dequeue and enqueue)
-        self.image_queue[:, ptr:ptr + batch_size] = image_feats.T
-        self.text_queue[:, ptr:ptr + batch_size] = text_feats.T
-        self.idx_queue[:, ptr:ptr + batch_size] = idxs.T
+        self.image_queue[:, ptr : ptr + batch_size] = image_feats.T
+        self.text_queue[:, ptr : ptr + batch_size] = text_feats.T
+        self.idx_queue[:, ptr : ptr + batch_size] = idxs.T
         ptr = (ptr + batch_size) % self.queue_size  # move pointer
 
         self.ptr_queue[0] = ptr
 
 
-def blip_retrieval(pretrained='', **kwargs):
+def blip_retrieval(pretrained="", **kwargs):
     model = BLIP_Retrieval(**kwargs)
     if pretrained:
         model, msg = load_checkpoint(model, pretrained)
@@ -273,8 +283,7 @@ def concat_all_gather(tensor):
     Performs all_gather operation on the provided tensors.
     *** Warning ***: torch.distributed.all_gather has no gradient.
     """
-    tensors_gather = [torch.ones_like(tensor)
-                      for _ in range(torch.distributed.get_world_size())]
+    tensors_gather = [torch.ones_like(tensor) for _ in range(torch.distributed.get_world_size())]
     torch.distributed.all_gather(tensors_gather, tensor, async_op=False)
 
     output = torch.cat(tensors_gather, dim=0)

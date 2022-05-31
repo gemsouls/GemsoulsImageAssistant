@@ -21,6 +21,15 @@ import threading
 from typing import *
 
 import aiohttp
+import cv2 as cv
+import numpy as np
+import requests
+import glob
+import io
+import base64
+import copy
+from PIL import Image
+
 
 ROOT = dirname(dirname(dirname(abspath(__file__))))
 sys.path.insert(0, ROOT)
@@ -36,41 +45,83 @@ def get_fb_log_images():
     return images
 
 
-async def send_messages_concurrently(url: str, num_messages: int = 10):
+def img2base64(img):
+    buffered = io.BytesIO()
+    img.save(buffered, format="PNG")
+    buffered.seek(0)
+    img_byte = buffered.getvalue()
+    img_str = base64.b64encode(img_byte).decode()
+    return img_str
+
+
+def cv_preprocess(image):
+    image = cv.cvtColor(np.array(image, dtype=np.uint8), cv.COLOR_RGB2BGR)
+    resize = (384, 384)
+    # resize = (224, 224)
+    image = cv.resize(image, dsize=resize, interpolation=cv.INTER_CUBIC)
+    image_str = base64.b64encode(cv.imencode(".png", image)[1].tobytes()).decode("utf-8")
+    return image_str
+
+
+def pil_preprocess(image, resize=(384, 384)):
+    if image.mode != "RGB":
+        image = image.convert("RGB")
+
+    imr = image.resize(resize, resample=Image.BILINEAR)
+    image_str = img2base64(imr)
+    return image_str
+
+
+def random_sample_images(num_messages):
+    image_pkl_lst = glob.glob("test_img/*.pkl")
+    image_paths = random.sample(image_pkl_lst, num_messages)
+    return image_paths
+
+
+def read_images_base64_str(image_fpath):
+    with open(image_fpath, "rb") as f:
+        data = f.read()
+    image = Image.open(io.BytesIO(data))
+    return pil_preprocess(image)
+
+
+async def send_messages_concurrently(url: str, num_messages: int = 10, verbose: bool = False):
     async def send_task(task_id, img_path, session):
         start_time = datetime.datetime.now()
+
+        image_str = read_images_base64_str(img_path)
+        if image_str == None:
+            return ""
+
         async with session.post(
             url,
-            json={
-                "task_id": task_id,
-                "image_url": img_path,
-            },
-            headers={'content-type': 'application/json'}
+            json={"task_id": task_id, "image_load_method": "pil", "image_str": image_str},
+            headers={"content-type": "application/json"},
         ) as response:
             res = await response.json()
         finish_time = datetime.datetime.now()
         print(f"task-{task_id} [{img_path}] using {(finish_time-start_time).total_seconds(): .4f}s")
         print(res)
 
-    image_paths = random.sample(get_fb_log_images(), num_messages)
-
+    image_paths = random_sample_images(num_messages)
+    s1 = time.time()
     async with aiohttp.ClientSession() as session:
-        await asyncio.gather(
-            *[send_task(task_id, img_path, session) for task_id, img_path in enumerate(image_paths)]
-        )
+        await asyncio.gather(*[send_task(task_id, img_path, session) for task_id, img_path in enumerate(image_paths)])
+    print("{} samples cost time: {}".format(num_messages, time.time() - s1))
 
 
-def send_message_every_n_seconds(url: str, num_messages: int = 10, n: float = 0.2):
+def send_message_every_n_seconds(url: str, num_messages: int = 10, n: float = 0.2, verbose: bool = False):
     def post_message(post_id, img_path):
         start_time = datetime.datetime.now()
+        image_str = read_images_base64_str(img_path)
+        if image_str == None:
+            return ""
+
         response = requests.post(
             url,
-            json={
-                "task_id": task_id,
-                "image_url": img_path,
-            },
+            json={"task_id": task_id, "image_load_method": "pil", "image_str": image_str},
             verify=False,
-            headers={'content-type': 'application/json'}
+            headers={"content-type": "application/json"},
         )
         finish_time = datetime.datetime.now()
         res = response.json()
@@ -78,8 +129,10 @@ def send_message_every_n_seconds(url: str, num_messages: int = 10, n: float = 0.
         print(res)
 
     threads = []
-    image_paths = get_fb_log_images()
-    for task_id, img_path in enumerate(random.sample(image_paths, num_messages)):
+    image_paths = random_sample_images(num_messages)
+    s1 = time.time()
+
+    for task_id, img_path in enumerate(image_paths):
         t = threading.Thread(target=post_message, args=(task_id, img_path), daemon=True)
         t.start()
         threads.append(t)
@@ -88,51 +141,24 @@ def send_message_every_n_seconds(url: str, num_messages: int = 10, n: float = 0.
     for t in threads:
         t.join()
 
+    print("{} samples cost time: {}".format(num_messages, time.time() - s1))
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--host",
-        type=str,
-        default="0.0.0.0"
-    )
-    parser.add_argument(
-        "--port",
-        type=str,
-        default="6006"
-    )
-    parser.add_argument(
-        "--route",
-        type=str,
-        default="image2text"
-    )
-    parser.add_argument(
-        "--msg_num",
-        type=int,
-        default=10
-    )
-    parser.add_argument(
-        "--interval",
-        type=float,
-        default=0.1
-    )
-    parser.add_argument(
-        "--test_sequentially",
-        action="store_true"
-    )
-    parser.add_argument(
-        "--test_concurrently",
-        action="store_true"
-    )
+    parser.add_argument("--host", type=str, default="hz.matpool.com")
+    parser.add_argument("--port", type=str, default="28032")
+    parser.add_argument("--route", type=str, default="image2text")
+    parser.add_argument("--msg_num", type=int, default=5)
+    parser.add_argument("--interval", type=float, default=0.1)
+    parser.add_argument("--test_sequentially", action="store_true")
+    parser.add_argument("--test_concurrently", action="store_true")
+    parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args()
-    url = "http://" + args.host + ":" + args.port + f"/{args.route}"
+    url = f"https://{args.host}:{args.port}/image2text/{args.route}"
 
     if args.test_sequentially:
-        send_message_every_n_seconds(
-            url, args.msg_num, args.interval
-        )
+        send_message_every_n_seconds(url, args.msg_num, args.interval, args.verbose)
 
     if args.test_concurrently:
-        send_messages_concurrently(
-            url, args.msg_num
-        )
+        asyncio.run(send_messages_concurrently(url, args.msg_num, args.verbose))
