@@ -71,7 +71,7 @@ def pil_preprocess(image, resize=(384, 384)):
 
 
 def random_sample_images(num_messages):
-    image_pkl_lst = glob.glob("test_img/*.pkl")
+    image_pkl_lst = glob.glob("gia_test/test_img/*.pkl")
     image_paths = random.sample(image_pkl_lst, num_messages)
     return image_paths
 

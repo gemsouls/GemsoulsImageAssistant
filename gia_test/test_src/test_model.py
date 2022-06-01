@@ -5,6 +5,10 @@
 # @File       : test_model.py
 # @Description:
 # @LastEditBy :
+import sys
+
+ROOT = dirname(dirname(dirname(abspath(__file__))))
+sys.path.insert(0, ROOT)
 
 import base64
 import copy
@@ -13,7 +17,6 @@ import io
 import os
 import pickle
 import random
-import sys
 import time
 from os.path import abspath, dirname, exists, join
 from typing import *
@@ -28,9 +31,6 @@ from gia_config import ServiceConfig
 from gia_config.nn_models_config import ClipCapModelConfig, ImageCaptionModelType
 from gia_model.helper.image_captioning_helper import ImageCaptionHelper
 from gia_model.message import TaskInputMessage, TaskMessage
-
-ROOT = dirname(dirname(dirname(abspath(__file__))))
-sys.path.insert(0, ROOT)
 
 
 def img2base64(img):
@@ -61,7 +61,7 @@ def cv_preprocess(image, resize):
 
 def pkl_test(helper, resize):
     num_messages = 2
-    image_pkl_lst = glob.glob("/home/lujianghu/code/GemsoulsImageNSFW/test_img/*.pkl")
+    image_pkl_lst = glob.glob("/home/lujianghu/code/GemsoulsImageNSFW/gia_test/test_img/*.pkl")
     image_paths = random.sample(image_pkl_lst, num_messages)
     for image_fpath in image_pkl_lst:
         with open(image_fpath, "rb") as f:
