@@ -9,21 +9,13 @@
 import sys
 from os.path import abspath, dirname, exists, join
 
-ROOT = dirname(dirname(dirname(abspath(__file__))))
-sys.path.insert(0, ROOT)
-import copy
-import pandas as pd
-import argparse
-import asyncio
 import base64
-import datetime
+import copy
 import glob
 import io
 import os
 import pickle
 import random
-import re
-import threading
 import time
 from os.path import abspath, dirname, exists, join
 from typing import *
@@ -31,12 +23,13 @@ from typing import *
 import aiohttp
 import cv2 as cv
 import numpy as np
-import requests
+import pandas as pd
+from PIL import Image
+
 from gia_config import ServiceConfig
 from gia_config.nn_models_config import ClipCapModelConfig, ImageCaptionModelType
 from gia_model.helper.image_captioning_helper import ImageCaptionHelper
 from gia_model.message import TaskInputMessage, TaskMessage
-from PIL import Image
 
 ROOT = dirname(dirname(dirname(abspath(__file__))))
 sys.path.insert(0, ROOT)

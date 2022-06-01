@@ -5,10 +5,10 @@
 
 
 from ..basic.basic_exception import GiaError
-
+from typing import Optional
 
 class GiaImageError(GiaError):
-    def __init__(self, origin_err_msg: str, additional_err_msg: str, image_url: str = None):
+    def __init__(self, origin_err_msg: str, additional_err_msg: str, image_url: Optional[str] = None):
         super(GiaImageError, self).__init__(origin_err_msg, additional_err_msg)
         self.image_url = image_url
 

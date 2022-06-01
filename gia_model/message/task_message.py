@@ -6,8 +6,9 @@
 # @Description:
 # @LastEditBy :
 
-from pydantic import Field
 from typing import *
+
+from pydantic import Field
 
 from ..basic import BasicMessage
 

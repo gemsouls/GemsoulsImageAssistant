@@ -1,11 +1,10 @@
-from .med import BertConfig, BertModel
+import torch
+import torch.nn.functional as F
+from torch import nn
 from transformers import BertTokenizer
 
-import torch
-from torch import nn
-import torch.nn.functional as F
-
 from .blip import create_vit, init_tokenizer, load_checkpoint
+from .med import BertConfig, BertModel
 
 
 class BLIP_ITM(nn.Module):

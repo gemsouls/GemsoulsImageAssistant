@@ -6,27 +6,26 @@
 # @Description:
 # @LastEditBy :
 
-import clip
-import numpy as np
 import os
 import sys
-from torch import nn
-import torch
-import torch.nn.functional as nnf
 import traceback
 from typing import *
 
+import clip
+import numpy as np
 import PIL.Image
 import skimage.io as io
+import torch
+import torch.nn.functional as nnf
+from torch import nn
 from transformers import (
-    GPT2Tokenizer,
-    GPT2LMHeadModel,
     AdamW,
+    GPT2LMHeadModel,
+    GPT2Tokenizer,
     get_linear_schedule_with_warmup,
 )
 
 from gia_model.exception.image_exception import GiaImageTransformError
-
 
 N = type(None)
 V = np.array

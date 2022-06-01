@@ -6,9 +6,9 @@
 # @Description:
 # @LastEditBy :
 
+import sys
 from enum import Enum
 from os.path import abspath, dirname, join
-import sys
 from typing import *
 
 ROOT = dirname(dirname(abspath(__file__)))

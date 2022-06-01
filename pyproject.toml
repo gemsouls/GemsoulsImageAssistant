@@ -1,2 +1,21 @@
 [tool.black]
-line-length = 119  
+line-length = 119
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+py_version = 38
+
+[pycodestyle]
+exclude = "CLIP/,gia_model/helper/utils/nn_models_utils/"
+ignore = ",E203,E226,E302,E402,E41,E501,E722,E731,"
+max-line-length = 119
+statistics = true
+
+[pytype]
+exclude = "\n **/*.pyi \n CLIP/ \n gia_model/helper/utils/nn_models_utils/ \n"
+keep_going = false
+platform = "linux"
+python_version = 3.8
+jobs = 4
+disable = ",pyi-error,import-error,base-class-error,ignored-abstractmethod,not-supported-yet,"

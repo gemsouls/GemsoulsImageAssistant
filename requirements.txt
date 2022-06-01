@@ -14,3 +14,7 @@ fairscale==0.4.4
 opencv-python==4.5.5.64
 starlette==0.16.0
 h11==0.13.0
+isort
+black 
+pytype
+pycodestyle

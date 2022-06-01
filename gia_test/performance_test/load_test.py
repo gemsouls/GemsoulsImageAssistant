@@ -9,27 +9,25 @@
 
 import argparse
 import asyncio
+import base64
+import copy
 import datetime
+import glob
+import io
 import os
-from os.path import join, dirname, abspath, exists
 import random
 import re
-import requests
 import sys
-import time
 import threading
+import time
+from os.path import abspath, dirname, exists, join
 from typing import *
 
 import aiohttp
 import cv2 as cv
 import numpy as np
 import requests
-import glob
-import io
-import base64
-import copy
 from PIL import Image
-
 
 ROOT = dirname(dirname(dirname(abspath(__file__))))
 sys.path.insert(0, ROOT)
@@ -90,7 +88,7 @@ async def send_messages_concurrently(url: str, num_messages: int = 10, verbose: 
         start_time = datetime.datetime.now()
 
         image_str = read_images_base64_str(img_path)
-        if image_str == None:
+        if image_str is None:
             return ""
 
         async with session.post(
@@ -114,7 +112,7 @@ def send_message_every_n_seconds(url: str, num_messages: int = 10, n: float = 0.
     def post_message(post_id, img_path):
         start_time = datetime.datetime.now()
         image_str = read_images_base64_str(img_path)
-        if image_str == None:
+        if image_str is None:
             return ""
 
         response = requests.post(

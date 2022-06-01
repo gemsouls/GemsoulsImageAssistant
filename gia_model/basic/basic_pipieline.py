@@ -6,9 +6,9 @@
 # @Description:
 # @LastEditBy :
 
-from abc import abstractmethod
 import asyncio
-from typing import *
+from abc import abstractmethod
+from typing import Optional, List, Callable
 
 from ..basic import BasicMessage
 

@@ -7,14 +7,15 @@
 import traceback
 from typing import *
 
-from PIL import Image
 import skimage.io as io
 import torch
+from PIL import Image
 from torchvision import transforms
 from torchvision.transforms.functional import InterpolationMode
 
-from .blip_models.blip import blip_decoder
 from gia_model.exception.image_exception import GiaImageTransformError
+
+from .blip_models.blip import blip_decoder
 
 
 class Predictor:

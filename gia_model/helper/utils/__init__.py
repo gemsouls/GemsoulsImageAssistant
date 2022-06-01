@@ -6,4 +6,4 @@
 # @Description:
 # @LastEditBy :
 
-from .nn_models_utils import ClipCapPredictor, BlipPredictor
+from .nn_models_utils import BlipPredictor, ClipCapPredictor

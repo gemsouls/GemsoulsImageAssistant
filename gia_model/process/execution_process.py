@@ -11,8 +11,8 @@ from queue import Queue
 from typing import *
 
 from ..basic import BasicTaskProcess, BasicTaskProcessHandler
-from ..pipeline import ExecutionPipeline
 from ..message import TaskMessage
+from ..pipeline import ExecutionPipeline
 
 
 class ExecutionProcess(BasicTaskProcess):

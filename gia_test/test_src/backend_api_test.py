@@ -12,6 +12,7 @@ import asyncio
 import base64
 import copy
 import datetime
+import glob
 import io
 import os
 import random
@@ -26,7 +27,6 @@ import aiohttp
 import cv2 as cv
 import numpy as np
 import requests
-import glob
 from PIL import Image
 
 
@@ -70,7 +70,7 @@ async def send_messages_concurrently(url: str, image_url_lst: List[str], verbose
         start_time = datetime.datetime.now()
 
         image_str = read_images_base64_str(img_path)
-        if image_str == None:
+        if image_str is None:
             return ""
 
         async with session.post(
@@ -97,7 +97,7 @@ def send_message_every_n_seconds(url: str, image_url_lst: List[str], n: float = 
         start_time = datetime.datetime.now()
 
         image_str = read_images_base64_str(img_path)
-        if image_str == None:
+        if image_str is None:
             return ""
 
         response = requests.post(

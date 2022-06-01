@@ -17,17 +17,17 @@ import numpy as np
 import PIL
 import requests
 import torch
-from gia_config import ServiceConfig
-from gia_config.nn_models_config import ImageCaptionModelType
 from PIL import Image
 from torchvision import transforms
 from torchvision.transforms.functional import InterpolationMode
 
+from gia_config import ServiceConfig
+from gia_config.nn_models_config import ImageCaptionModelType
+
 from ..basic import BasicHelper, BasicHelperNNModelsMap, BasicHelperResourcesMap
-from ..exception.image_exception import *
+from ..exception.image_exception import GiaImageTransformError, GiaImageReadError, GiaImageDownLoadError
 from ..message import TaskMessage
 from .utils import BlipPredictor, ClipCapPredictor
-
 
 class ImageCaptionHelper(BasicHelper):
     HEADERS = {
@@ -61,7 +61,7 @@ class ImageCaptionHelper(BasicHelper):
 
         try:
             caption_result = self.predictor.predict(image, use_beam_search=use_beam_search)
-        except:
+        except Exception as e:
             raise
         else:
             # TODO: 添加适当的截断策略以保留完整的句子
@@ -76,9 +76,7 @@ class ImageCaptionHelper(BasicHelper):
         # TODO: 更严苛的路径检验（如判断是否是图片路径等）以防止攻击
         # local image
         if (
-            os.path.exists(image_url)
-            and os.path.isfile(image_url)
-            and any(
+            os.path.exists(image_url) and os.path.isfile(image_url) and any(
                 [
                     image_url.lower().endswith(postfix)
                     for postfix in ["jpg", "jpeg", "png", "bmp", "webp", "tif", "tiff"]
@@ -88,7 +86,7 @@ class ImageCaptionHelper(BasicHelper):
             try:
                 with open(image_url, "rb") as f:
                     image = f.read()
-            except:
+            except Exception as e:
                 raise GiaImageReadError(
                     origin_err_msg=traceback.format_exc(),
                     additional_err_msg=f"read local image [{image_url}] failed.",
@@ -147,15 +145,14 @@ class ImageCaptionHelper(BasicHelper):
 
         try:
             if isinstance(image, str):
-                raw_image = io.imread(image)
+                raw_image = io.imread(image)   # type: ignore
                 raw_image = Image.fromarray(raw_image)
             else:
                 raw_image = image
             # raw_image = raw_image.convert("RGB")
 
             transform = transforms.Compose(
-                resize_op
-                + [
+                resize_op + [
                     transforms.ToTensor(),
                     transforms.Normalize((0.48145466, 0.4578275, 0.40821073), (0.26862954, 0.26130258, 0.27577711)),
                 ]
@@ -168,7 +165,7 @@ class ImageCaptionHelper(BasicHelper):
 
             image = transform(raw_image).unsqueeze(0).to(self.device)
             return image
-        except:
+        except Exception as e:
             task_message.task_failure_info = "[preprocess]: Image Transforms Failed"
             raise GiaImageTransformError(
                 origin_err_msg=traceback.format_exc(),

@@ -9,7 +9,8 @@
 
 from datetime import datetime
 from enum import Enum, EnumMeta
-from typing import *
+from typing import List, Any
+
 from pydantic import BaseModel
 
 DT_FMT = "%Y-%m-%d %H:%M:%S"
@@ -25,7 +26,7 @@ class BasicMessage(BaseModel):
         return spacial_value
 
     @staticmethod
-    def _raw2spacial(raw_value: Any, spacial_value_type: Any):
+    def _raw2spacial(raw_value: Any, spacial_value_type: List[EnumMeta]):
         if type(spacial_value_type) == EnumMeta:
             for e in spacial_value_type:
                 if e.name == raw_value:

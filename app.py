@@ -8,19 +8,19 @@
 
 import asyncio
 import threading
+import time
 from datetime import datetime
 from hashlib import md5
-from queue import Queue, Empty
-import time
+from queue import Empty, Queue
 from typing import *
 
 from fastapi import FastAPI
 
-from gia_model.pipeline import ExecutionPipeline
-from gia_model.process import ExecutionProcessHandler, ExecutionProcess
-from gia_model.message import TaskMessage, TaskInputMessage, TaskOutputMessage
 from gia_config import ServiceConfig
 from gia_config.nn_models_config import ImageCaptionModelType
+from gia_model.message import TaskInputMessage, TaskMessage, TaskOutputMessage
+from gia_model.pipeline import ExecutionPipeline
+from gia_model.process import ExecutionProcess, ExecutionProcessHandler
 
 
 class Queues:
@@ -29,7 +29,7 @@ class Queues:
 
 
 class AppManager:
-    queues: Queues = Queues
+    queues: Type[Queues] = Queues
     execution_process_handler: ExecutionProcessHandler = None
     result_pool: Dict[Union[int, str, bytes], TaskMessage] = dict()
 

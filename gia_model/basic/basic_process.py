@@ -6,16 +6,16 @@
 # @Description:
 # @LastEditBy :
 
-from abc import abstractmethod
 import asyncio
-from queue import Queue, Empty, Full
-import time
 import threading
+import time
 import traceback
+from abc import abstractmethod
+from queue import Empty, Full, Queue
 from typing import *
 
-from . import BasicPipeline
 from ..message import TaskMessage
+from . import BasicPipeline
 
 
 class BasicTaskProcess:
@@ -133,12 +133,12 @@ class BasicTaskProcessHandler:
         self,
         process: Callable,
         pipeline: Callable,
-        pipeline_init_kwargs: Dict[str, Any],
+        pipeline_init_kwargs: Optional[Dict[str, Any]],
         input_queue: Queue,
         output_queues: List[Queue],
         failure_queue: Queue,
         n_proc: int = 1,
-        default_pipeline_additional_execution_kwargs: Dict[str, Any] = None,
+        default_pipeline_additional_execution_kwargs: Optional[Dict[str, Any]] = None,
     ):
         self._accept_input = True
 

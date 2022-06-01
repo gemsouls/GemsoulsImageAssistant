@@ -5,15 +5,16 @@
  * For full license text, see LICENSE.txt file in the repo root or https://opensource.org/licenses/BSD-3-Clause
  * By Junnan Li
 """
-from .med import BertConfig, BertModel, BertLMHeadModel
-from transformers import BertTokenizer
 import transformers
+from transformers import BertTokenizer
+
+from .med import BertConfig, BertLMHeadModel, BertModel
 
 transformers.logging.set_verbosity_error()
 
 import torch
-from torch import nn
 import torch.nn.functional as F
+from torch import nn
 
 from .blip import create_vit, init_tokenizer, load_checkpoint
 

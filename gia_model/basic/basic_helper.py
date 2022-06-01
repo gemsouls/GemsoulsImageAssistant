@@ -8,7 +8,7 @@
 
 
 from abc import abstractmethod
-from typing import *
+from typing import Optional
 
 
 class BasicHelperNNModelsMap:
@@ -26,9 +26,9 @@ class BasicHelperResourcesMap:
 class BasicHelper:
     def __init__(
         self,
-        nn_models_map: BasicHelperNNModelsMap = None,
-        resources_map: BasicHelperResourcesMap = None,
-        turn_on: bool = True,
+        nn_models_map: Optional[BasicHelperNNModelsMap] = None,
+        resources_map: Optional[BasicHelperResourcesMap] = None,
+        turn_on: Optional[bool] = True,
         **additional_config
     ):
         self.nn_models_map = nn_models_map

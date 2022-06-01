@@ -7,7 +7,6 @@
 # @LastEditBy :
 
 from abc import abstractmethod
-from typing import *
 
 
 class BasicCheckerNNModelsMap:

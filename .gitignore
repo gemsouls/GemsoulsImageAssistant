@@ -1,3 +1,6 @@
 .idea/*
+.pytype
 gia_src/nn_models/*
 # gia_test/test_src/*
+nohuplog
+*.xlsx

@@ -6,7 +6,7 @@
 # @Description:
 # @LastEditBy :
 
-from .nn_models_config import NNModelsConfig, ImageCaptionModelType
+from .nn_models_config import ImageCaptionModelType, NNModelsConfig
 
 
 class ServiceConfig:

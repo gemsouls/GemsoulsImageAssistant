@@ -6,4 +6,4 @@
 # @Description:
 # @LastEditBy :
 
-from .task_message import TaskMessage, TaskOutputMessage, TaskInputMessage
+from .task_message import TaskInputMessage, TaskMessage, TaskOutputMessage

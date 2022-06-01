@@ -11,10 +11,11 @@ from typing import *
 
 import torch
 
+from gia_config import ServiceConfig
+
 from ..basic import BasicPipeline
 from ..helper import ImageCaptionHelper
 from ..message import TaskMessage
-from gia_config import ServiceConfig
 
 
 class ExecutionPipeline(BasicPipeline):
