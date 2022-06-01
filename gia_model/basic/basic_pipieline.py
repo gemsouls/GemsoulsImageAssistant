@@ -8,7 +8,7 @@
 
 import asyncio
 from abc import abstractmethod
-from typing import Optional, List, Callable
+from typing import Callable, List, Optional
 
 from ..basic import BasicMessage
 

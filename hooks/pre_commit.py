@@ -31,7 +31,7 @@ def format_code():
         print("=" * 20)
 
     print_result("isort", isort_result)
-    print_result("isort", black_result)
+    print_result("black", black_result)
     print_result("pycodestyle", pycodestyle_result)
     # print_result("pytype", pytype_result)
 
@@ -68,5 +68,5 @@ def clean():
 
 if __name__ == "__main__":
     format_code()
-    test()
+    # test()
     # clean()

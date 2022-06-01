@@ -6,9 +6,6 @@
 # @Description:
 # @LastEditBy :
 
-import sys
-from os.path import abspath, dirname, exists, join
-
 import base64
 import copy
 import glob
@@ -16,6 +13,7 @@ import io
 import os
 import pickle
 import random
+import sys
 import time
 from os.path import abspath, dirname, exists, join
 from typing import *

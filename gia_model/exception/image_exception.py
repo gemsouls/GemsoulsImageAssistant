@@ -4,8 +4,10 @@
 # @Description:
 
 
-from ..basic.basic_exception import GiaError
 from typing import Optional
+
+from ..basic.basic_exception import GiaError
+
 
 class GiaImageError(GiaError):
     def __init__(self, origin_err_msg: str, additional_err_msg: str, image_url: Optional[str] = None):

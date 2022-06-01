@@ -25,9 +25,14 @@ from gia_config import ServiceConfig
 from gia_config.nn_models_config import ImageCaptionModelType
 
 from ..basic import BasicHelper, BasicHelperNNModelsMap, BasicHelperResourcesMap
-from ..exception.image_exception import GiaImageTransformError, GiaImageReadError, GiaImageDownLoadError
+from ..exception.image_exception import (
+    GiaImageDownLoadError,
+    GiaImageReadError,
+    GiaImageTransformError,
+)
 from ..message import TaskMessage
 from .utils import BlipPredictor, ClipCapPredictor
+
 
 class ImageCaptionHelper(BasicHelper):
     HEADERS = {
@@ -76,7 +81,9 @@ class ImageCaptionHelper(BasicHelper):
         # TODO: 更严苛的路径检验（如判断是否是图片路径等）以防止攻击
         # local image
         if (
-            os.path.exists(image_url) and os.path.isfile(image_url) and any(
+            os.path.exists(image_url)
+            and os.path.isfile(image_url)
+            and any(
                 [
                     image_url.lower().endswith(postfix)
                     for postfix in ["jpg", "jpeg", "png", "bmp", "webp", "tif", "tiff"]
@@ -145,14 +152,15 @@ class ImageCaptionHelper(BasicHelper):
 
         try:
             if isinstance(image, str):
-                raw_image = io.imread(image)   # type: ignore
+                raw_image = io.imread(image)  # type: ignore
                 raw_image = Image.fromarray(raw_image)
             else:
                 raw_image = image
             # raw_image = raw_image.convert("RGB")
 
             transform = transforms.Compose(
-                resize_op + [
+                resize_op
+                + [
                     transforms.ToTensor(),
                     transforms.Normalize((0.48145466, 0.4578275, 0.40821073), (0.26862954, 0.26130258, 0.27577711)),
                 ]
