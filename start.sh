@@ -1,0 +1,1 @@
+nohup /root/miniconda3/envs/imagecaption/bin/python run_app.py --port 6006 > nohuplog/nohup.out 2>&1 &
