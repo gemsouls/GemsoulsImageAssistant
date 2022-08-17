@@ -14,12 +14,12 @@ from abc import abstractmethod
 from queue import Empty, Full, Queue
 from typing import *
 
-from ..message import TaskMessage
-from . import BasicPipeline
+from ..message.task_message import TaskMessage
+from ..pipeline.execution_pipeline import ExecutionPipeline
 
 
 class BasicTaskProcess:
-    pipeline: BasicPipeline
+    pipeline: ExecutionPipeline
 
     def __init__(
         self,

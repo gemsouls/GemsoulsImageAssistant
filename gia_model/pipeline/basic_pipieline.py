@@ -10,7 +10,7 @@ import asyncio
 from abc import abstractmethod
 from typing import Callable, List, Optional
 
-from ..basic import BasicMessage
+from ..message.task_message import TaskMessage
 
 
 class BasicPipelineNNModelsInitializer:
@@ -53,7 +53,7 @@ class BasicPipeline:
 
     def run_sequential(
         self,
-        message: BasicMessage,
+        message: TaskMessage,
         addition_pipes: Optional[List[Callable]] = None,
         execute_orders: Optional[List[int]] = None,
         *args,
@@ -71,7 +71,7 @@ class BasicPipeline:
                     pipe
                 ) else pipe(message, *args, **kwargs.get(str(idx), dict()))
 
-    async def run_async(self, message: BasicMessage, addition_pipes: Optional[List[Callable]] = None, *args, **kwargs):
+    async def run_async(self, message: TaskMessage, addition_pipes: Optional[List[Callable]] = None, *args, **kwargs):
         if addition_pipes is None:
             addition_pipes = []
         pipes = self.default_async_pipes + addition_pipes
@@ -83,7 +83,7 @@ class BasicPipeline:
     @abstractmethod
     def run(
         self,
-        message: BasicMessage,
+        message: TaskMessage,
         addition_sequential_pipes: Optional[List[Callable]] = None,
         addition_async_pipes: Optional[List[Callable]] = None,
         sequential_execute_orders: Optional[List[int]] = None,

@@ -24,13 +24,13 @@ from torchvision.transforms.functional import InterpolationMode
 from gia_config import ServiceConfig
 from gia_config.nn_models_config import ImageCaptionModelType
 
-from ..basic import BasicHelper, BasicHelperNNModelsMap, BasicHelperResourcesMap
 from ..exception.image_exception import (
     GiaImageDownLoadError,
     GiaImageReadError,
     GiaImageTransformError,
 )
 from ..message import TaskMessage
+from .basic_helper import BasicHelper, BasicHelperNNModelsMap, BasicHelperResourcesMap
 from .utils import BlipPredictor, ClipCapPredictor
 
 

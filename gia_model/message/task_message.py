@@ -10,7 +10,7 @@ from typing import *
 
 from pydantic import Field
 
-from ..basic import BasicMessage
+from .basic_message import BasicMessage
 
 
 class TaskInputMessage(BasicMessage):

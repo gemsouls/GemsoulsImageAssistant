@@ -13,9 +13,9 @@ import torch
 
 from gia_config import ServiceConfig
 
-from ..basic import BasicPipeline
 from ..helper import ImageCaptionHelper
 from ..message import TaskMessage
+from .basic_pipieline import BasicPipeline
 
 
 class ExecutionPipeline(BasicPipeline):

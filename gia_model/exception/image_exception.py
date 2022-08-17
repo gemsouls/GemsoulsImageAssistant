@@ -6,7 +6,7 @@
 
 from typing import Optional
 
-from ..basic.basic_exception import GiaError
+from .basic_exception import GiaError
 
 
 class GiaImageError(GiaError):
